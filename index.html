@@ -1,0 +1,1372 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aplikasi Rekap Crr.Tech</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6;
+            color: #1f2937;
+            padding-top: 5rem;
+        }
+        .container {
+            max-width: 1200px;
+            margin: auto;
+            padding: 2rem;
+        }
+        .card {
+            background-color: #fff;
+            border-radius: 1rem;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            padding: 1.5rem;
+        }
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.75rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s, transform 0.2s;
+        }
+        .btn-primary {
+            background-color: #3b82f6;
+            color: #fff;
+        }
+        .btn-primary:hover {
+            background-color: #2563eb;
+            transform: translateY(-2px);
+        }
+        .btn-danger {
+            background-color: #ef4444;
+            color: #fff;
+        }
+        .btn-danger:hover {
+            background-color: #dc2626;
+            transform: translateY(-2px);
+        }
+        .btn-success {
+            background-color: #10b981;
+            color: #fff;
+        }
+        .btn-success:hover {
+            background-color: #059669;
+            transform: translateY(-2px);
+        }
+        .btn-print {
+            background-color: #8B5CF6;
+            color: #fff;
+        }
+        .btn-print:hover {
+            background-color: #7C3AED;
+            transform: translateY(-2px);
+        }
+        .table-custom th, .table-custom td {
+            padding: 0.75rem;
+            border-bottom: 1px solid #e5e7eb;
+            text-align: left;
+        }
+        .table-custom th {
+            background-color: #f9fafb;
+            font-weight: 600;
+        }
+        .input-field {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #d1d5db;
+            border-radius: 0.5rem;
+            font-size: 1rem;
+        }
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(1, minmax(0, 1fr));
+            gap: 1rem;
+        }
+        @media (min-width: 768px) {
+            .form-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+        }
+        /* Custom modal styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            transition: opacity 0.3s ease-in-out;
+            opacity: 0;
+            visibility: hidden;
+        }
+        .modal-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+        .modal-content {
+            background: #fff;
+            padding: 2rem;
+            border-radius: 1rem;
+            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+            width: 90%;
+            max-width: 500px;
+            transform: scale(0.9);
+            transition: transform 0.3s ease-in-out;
+        }
+        .modal-overlay.active .modal-content {
+            transform: scale(1);
+        }
+        /* Custom styles for searchable dropdown */
+        .searchable-dropdown-container {
+            position: relative;
+        }
+        .dropdown-list {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background-color: #fff;
+            border: 1px solid #d1d5db;
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+            max-height: 200px;
+            overflow-y: auto;
+            z-index: 500;
+            margin-top: 4px;
+        }
+        .dropdown-list-item {
+            padding: 0.75rem;
+            cursor: pointer;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        .dropdown-list-item:hover {
+            background-color: #f3f4f6;
+        }
+        .dropdown-list-item:last-child {
+            border-bottom: none;
+        }
+
+        /* Struk Cetak */
+        .receipt-container {
+            font-family: monospace, sans-serif;
+            font-size: 10px;
+            width: 58mm;
+            padding: 5mm;
+            box-sizing: border-box;
+            color: black;
+        }
+        .receipt-header {
+            text-align: center;
+            font-size: 14px;
+            font-weight: bold;
+            margin-bottom: 2px;
+        }
+        .receipt-sub-header {
+            text-align: center;
+            font-size: 10px;
+            margin-bottom: 2px;
+        }
+        .receipt-address, .receipt-contact {
+            text-align: center;
+            font-size: 9px;
+            margin-bottom: 5px;
+        }
+        .receipt-line {
+            border-top: 1px dashed black;
+            margin: 5px 0;
+        }
+        .receipt-item-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 2px;
+        }
+        .receipt-item-details {
+            width: 70%;
+        }
+        .receipt-item-price {
+            text-align: right;
+            width: 30%;
+        }
+        .receipt-total-container {
+            display: flex;
+            justify-content: space-between;
+            font-weight: bold;
+            margin-top: 5px;
+        }
+        .receipt-footer {
+            text-align: center;
+            margin-top: 10px;
+            font-size: 10px;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Taskbar (Menu Navigasi) -->
+    <nav class="fixed top-0 left-0 w-full bg-white z-50 shadow-md">
+        <div class="container flex justify-between items-center py-4 px-2 md:px-0">
+            <h1 class="text-xl font-bold text-gray-800">App Rekap Crr.Tech</h1>
+            <ul class="flex space-x-4 md:space-x-8">
+                <li><a href="#dashboard-harian" class="text-gray-600 hover:text-blue-500 font-semibold transition-colors duration-200">Dashboard & Harian</a></li>
+                <li><a href="#pengeluaran" class="text-gray-600 hover:text-red-500 font-semibold transition-colors duration-200">Pengeluaran</a></li>
+                <li><a href="#sparepart" class="text-gray-600 hover:text-green-500 font-semibold transition-colors duration-200">Sparepart</a></li>
+                <li><a href="#rekap-bulanan" class="text-gray-600 hover:text-purple-500 font-semibold transition-colors duration-200">Rekap Bulanan</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="container">
+        <!-- Modal Konfirmasi -->
+        <div id="confirmModal" class="modal-overlay">
+            <div class="modal-content">
+                <h3 class="text-xl font-bold mb-4">Konfirmasi Penghapusan</h3>
+                <p id="confirmMessage" class="mb-6">Apakah Anda yakin ingin menghapus data ini?</p>
+                <div class="flex justify-end gap-2">
+                    <button id="cancelBtn" class="btn bg-gray-200 text-gray-700 hover:bg-gray-300">Batal</button>
+                    <button id="confirmBtn" class="btn btn-danger">Hapus</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Modal Pesan Custom -->
+        <div id="messageModal" class="modal-overlay">
+            <div class="modal-content">
+                <h3 class="text-xl font-bold mb-4">Pemberitahuan</h3>
+                <p id="messageContent" class="mb-6"></p>
+                <div class="flex justify-end">
+                    <button id="closeMessageBtn" class="btn btn-primary">OK</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Dashboard Section -->
+        <div id="dashboard-harian" class="card mb-8">
+            <h2 class="text-2xl font-bold mb-4">Dashboard Penjualan</h2>
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <div>
+                    <h3 class="text-xl font-semibold mb-2">Penjualan Harian (7 Hari Terakhir)</h3>
+                    <canvas id="dailySalesChart"></canvas>
+                </div>
+                <div>
+                    <h3 class="text-xl font-semibold mb-2">Penjualan Bulanan (12 Bulan Terakhir)</h3>
+                    <canvas id="monthlySalesChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Forms and Data Sections -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <!-- Form Pemasukan Harian -->
+            <div class="card h-fit">
+                <h2 class="text-2xl font-bold mb-4">Input Pemasukan Harian</h2>
+                <form id="serviceForm" class="flex flex-col gap-4">
+                    <input type="hidden" id="serviceId">
+                    <div>
+                        <label for="tanggalService" class="block text-sm font-medium mb-1">Tanggal</label>
+                        <input type="date" id="tanggalService" class="input-field" required>
+                    </div>
+                    <div>
+                        <label for="konsumen" class="block text-sm font-medium mb-1">Nama Konsumen</label>
+                        <input type="text" id="konsumen" class="input-field" placeholder="Nama konsumen" required>
+                    </div>
+                    <!-- Searchable Dropdown untuk Sparepart -->
+                    <div>
+                        <label for="sparepartUsedSearch" class="block text-sm font-medium mb-1">Sparepart Digunakan</label>
+                        <div class="searchable-dropdown-container">
+                            <input type="text" id="sparepartUsedSearch" class="input-field" placeholder="Cari sparepart...">
+                            <div id="sparepartDropdownList" class="dropdown-list hidden"></div>
+                            <!-- Input hidden ini untuk menyimpan ID dokumen sparepart -->
+                            <input type="hidden" id="sparepartUsedId">
+                        </div>
+                    </div>
+                    <div>
+                        <label for="kerusakan" class="block text-sm font-medium mb-1">Jenis Kerusakan</label>
+                        <input type="text" id="kerusakan" class="input-field" placeholder="Ganti LCD, mati total, dll" required>
+                    </div>
+                    <div>
+                        <label for="garansi" class="block text-sm font-medium mb-1">Garansi (Tanggal Selesai)</label>
+                        <input type="date" id="garansi" class="input-field">
+                    </div>
+                    <!-- Modal Otomatis -->
+                    <div>
+                        <label for="modal" class="block text-sm font-medium mb-1">Modal (Rp)</label>
+                        <!-- Input hidden ini yang akan menyimpan harga beli untuk perhitungan laba -->
+                        <input type="hidden" id="modal" value="0">
+                        <!-- Elemen ini yang akan menampilkan harga jual sesuai permintaan -->
+                        <div id="modalDisplay" class="bg-gray-100 p-3 rounded-lg text-lg font-bold text-gray-800">Rp 0</div>
+                    </div>
+                    <div>
+                        <label for="biayaService" class="block text-sm font-medium mb-1">Biaya Service (Rp)</label>
+                        <input type="number" id="biayaService" class="input-field" placeholder="Biaya yang dibebankan ke konsumen" required min="0">
+                    </div>
+                    <div class="flex gap-4">
+                        <button type="submit" class="btn btn-primary mt-2 flex-1" id="saveServiceBtn">Simpan Pemasukan</button>
+                        <button type="button" class="btn btn-print mt-2 flex-1" id="printReceiptBtn">Cetak Struk</button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Tabel Pemasukan Harian -->
+            <div class="card overflow-x-auto">
+                <h2 class="text-2xl font-bold mb-4">Data Harian</h2>
+                <div class="mb-4">
+                    <input type="text" id="serviceSearch" class="input-field" placeholder="Cari data harian...">
+                </div>
+                <table class="w-full table-custom">
+                    <thead>
+                        <tr>
+                            <th class="whitespace-nowrap">Tanggal</th>
+                            <th class="whitespace-nowrap">Konsumen</th>
+                            <th class="whitespace-nowrap">Kerusakan</th>
+                            <th class="whitespace-nowrap">Garansi</th>
+                            <th class="whitespace-nowrap">Modal</th>
+                            <th class="whitespace-nowrap">Biaya Service</th>
+                            <th class="whitespace-nowrap">Laba</th>
+                            <th class="whitespace-nowrap">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody id="dailyServiceTable">
+                        <!-- Data akan diisi oleh JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="pengeluaran" class="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-8">
+            <!-- Form Pengeluaran -->
+            <div class="card h-fit">
+                <h2 class="text-2xl font-bold mb-4">Input Pengeluaran</h2>
+                <form id="expenseForm" class="flex flex-col gap-4">
+                    <input type="hidden" id="expenseId">
+                    <div>
+                        <label for="tanggalPengeluaran" class="block text-sm font-medium mb-1">Tanggal</label>
+                        <input type="date" id="tanggalPengeluaran" class="input-field" required>
+                    </div>
+                    <div>
+                        <label for="jenisPengeluaran" class="block text-sm font-medium mb-1">Jenis Pengeluaran</label>
+                        <input type="text" id="jenisPengeluaran" class="input-field" placeholder="Listrik, sewa, gaji, dll" required>
+                    </div>
+                    <div>
+                        <label for="biayaPengeluaran" class="block text-sm font-medium mb-1">Biaya (Rp)</label>
+                        <input type="number" id="biayaPengeluaran" class="input-field" placeholder="Jumlah pengeluaran" required min="0">
+                    </div>
+                    <div>
+                        <label for="keterangan" class="block text-sm font-medium mb-1">Keterangan</label>
+                        <input type="text" id="keterangan" class="input-field" placeholder="Deskripsi tambahan">
+                    </div>
+                    <button type="submit" class="btn btn-danger mt-2" id="saveExpenseBtn">Simpan Pengeluaran</button>
+                </form>
+            </div>
+            
+            <!-- Tabel Pengeluaran -->
+            <div class="card overflow-x-auto">
+                <h2 class="text-2xl font-bold mb-4">Data Pengeluaran</h2>
+                <div class="mb-4">
+                    <input type="text" id="expenseSearch" class="input-field" placeholder="Cari pengeluaran...">
+                </div>
+                <table class="w-full table-custom">
+                    <thead>
+                        <tr>
+                            <th class="whitespace-nowrap">Tanggal</th>
+                            <th class="whitespace-nowrap">Jenis</th>
+                            <th class="whitespace-nowrap">Biaya</th>
+                            <th class="whitespace-nowrap">Keterangan</th>
+                            <th class="whitespace-nowrap">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody id="expenseDataTable">
+                        <!-- Data akan diisi oleh JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Spare Part Section -->
+        <div id="sparepart" class="card mt-8">
+            <h2 class="text-2xl font-bold mb-4">Manajemen Stok Sparepart</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <!-- Form Sparepart -->
+                <div class="h-fit">
+                    <form id="sparePartForm" class="flex flex-col gap-4">
+                        <input type="hidden" id="sparePartId">
+                        <div class="form-grid">
+                            <div>
+                                <label for="partJenis" class="block text-sm font-medium mb-1">Jenis Sparepart</label>
+                                <input type="text" id="partJenis" class="input-field" placeholder="LCD, Baterai, dll" required>
+                            </div>
+                            <div>
+                                <label for="partMerk" class="block text-sm font-medium mb-1">Merk</label>
+                                <input type="text" id="partMerk" class="input-field" placeholder="Samsung, iPhone, dll" required>
+                            </div>
+                            <div>
+                                <label for="partTipe" class="block text-sm font-medium mb-1">Tipe</label>
+                                <input type="text" id="partTipe" class="input-field" placeholder="LCD J7 Pro" required>
+                            </div>
+                            <div>
+                                <label for="partHargaBeli" class="block text-sm font-medium mb-1">Harga Beli (Rp)</label>
+                                <input type="number" id="partHargaBeli" class="input-field" placeholder="Harga modal" required min="0">
+                            </div>
+                            <div>
+                                <label for="partHargaJual" class="block text-sm font-medium mb-1">Harga Jual (Rp)</label>
+                                <input type="number" id="partHargaJual" class="input-field" placeholder="Harga untuk konsumen" required min="0">
+                            </div>
+                            <div>
+                                <label for="partJumlahStok" class="block text-sm font-medium mb-1">Jumlah Stok</label>
+                                <input type="number" id="partJumlahStok" class="input-field" placeholder="Jumlah unit" required min="0">
+                            </div>
+                            <div>
+                                <label for="partMargin" class="block text-sm font-medium mb-1">Margin (Rp)</label>
+                                <input type="text" id="partMargin" class="input-field bg-gray-100 cursor-not-allowed" disabled>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-success mt-2" id="saveSparePartBtn">Tambah Sparepart</button>
+                    </form>
+                </div>
+                <!-- Tabel Sparepart -->
+                <div class="overflow-x-auto">
+                    <div class="mb-4">
+                        <input type="text" id="sparePartSearch" class="input-field" placeholder="Cari sparepart...">
+                    </div>
+                    <table class="w-full table-custom">
+                        <thead>
+                            <tr>
+                                <th class="whitespace-nowrap">Jenis</th>
+                                <th class="whitespace-nowrap">Merk</th>
+                                <th class="whitespace-nowrap">Tipe</th>
+                                <th class="whitespace-nowrap">Harga Beli</th>
+                                <th class="whitespace-nowrap">Harga Jual</th>
+                                <th class="whitespace-nowrap">Margin</th>
+                                <th class="whitespace-nowrap">Jumlah Stok</th>
+                                <th class="whitespace-nowrap">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="sparePartTable">
+                            <!-- Data sparepart akan diisi oleh JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Rekap Bulanan Section -->
+        <div id="rekap-bulanan" class="card mt-8">
+            <h2 class="text-2xl font-bold mb-4">Rekap Bulanan</h2>
+            <div class="overflow-x-auto">
+                <table class="w-full table-custom">
+                    <thead>
+                        <tr>
+                            <th class="whitespace-nowrap">Bulan</th>
+                            <th class="whitespace-nowrap">Pemasukan Kotor</th>
+                            <th class="whitespace-nowrap">Total Modal</th>
+                            <th class="whitespace-nowrap">Total Pengeluaran</th>
+                            <th class="whitespace-nowrap">Laba Bersih</th>
+                            <th class="whitespace-nowrap">Jml Transaksi</th>
+                        </tr>
+                    </thead>
+                    <tbody id="monthlyReportTable">
+                        <!-- Rekap bulanan akan diisi oleh JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase SDKs -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, getDoc, addDoc, setDoc, updateDoc, deleteDoc, onSnapshot, collection, query, where } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // =================================================================================================
+        // LANGKAH PENTING: Ganti objek 'firebaseConfig' di bawah ini dengan konfigurasi proyek Firebase Anda sendiri.
+        // Anda bisa menemukannya di Firebase Console > Project Settings > Your apps.
+        // =================================================================================================
+        const firebaseConfig = {
+            apiKey: "AIzaSyDVs1vmpRmfsIm28vMkM6WI8bIzY2zmS_o",
+  authDomain: "crrtech-dfbd1.firebaseapp.com",
+  projectId: "crrtech-dfbd1",
+  storageBucket: "crrtech-dfbd1.firebasestorage.app",
+  messagingSenderId: "1051032663777",
+  appId: "1:1051032663777:web:2a6f657b950abba55e69a0"
+        };
+        
+        let db, auth, userId;
+        let serviceData = [];
+        let expenseData = [];
+        let sparePartData = [];
+        let dailyChart, monthlyChart;
+        let selectedSparePart;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const serviceForm = document.getElementById('serviceForm');
+            const dailyServiceTable = document.getElementById('dailyServiceTable');
+            const expenseForm = document.getElementById('expenseForm');
+            const expenseDataTable = document.getElementById('expenseDataTable');
+            const sparePartForm = document.getElementById('sparePartForm');
+            const sparePartTable = document.getElementById('sparePartTable');
+            const sparePartSearch = document.getElementById('sparePartSearch');
+            const monthlyReportTable = document.getElementById('monthlyReportTable');
+            const dailySalesChartCtx = document.getElementById('dailySalesChart').getContext('2d');
+            const monthlySalesChartCtx = document.getElementById('monthlySalesChart').getContext('2d');
+            const confirmModal = document.getElementById('confirmModal');
+            const confirmBtn = document.getElementById('confirmBtn');
+            const cancelBtn = document.getElementById('cancelBtn');
+            const messageModal = document.getElementById('messageModal');
+            const closeMessageBtn = document.getElementById('closeMessageBtn');
+            const navLinks = document.querySelectorAll('nav a[href^="#"]');
+            const serviceSearch = document.getElementById('serviceSearch');
+            const expenseSearch = document.getElementById('expenseSearch');
+            const printReceiptBtn = document.getElementById('printReceiptBtn');
+
+            // Elemen-elemen untuk searchable dropdown sparepart
+            const sparepartUsedSearch = document.getElementById('sparepartUsedSearch');
+            const sparepartDropdownList = document.getElementById('sparepartDropdownList');
+            const sparepartUsedId = document.getElementById('sparepartUsedId');
+            const modalInput = document.getElementById('modal');
+            const modalDisplay = document.getElementById('modalDisplay');
+
+            // Fungsi untuk menambahkan animasi scroll halus
+            navLinks.forEach(link => {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const targetId = this.getAttribute('href');
+                    const targetElement = document.querySelector(targetId);
+                    if (targetElement) {
+                        targetElement.scrollIntoView({
+                            behavior: 'smooth',
+                            block: 'start'
+                        });
+                    }
+                });
+            });
+
+            // Fungsi untuk menampilkan modal konfirmasi
+            const showConfirmModal = (message, onConfirm) => {
+                document.getElementById('confirmMessage').textContent = message;
+                confirmModal.classList.add('active');
+                
+                // Hapus event listener lama
+                confirmBtn.onclick = null;
+                cancelBtn.onclick = null;
+
+                confirmBtn.onclick = () => {
+                    onConfirm();
+                    confirmModal.classList.remove('active');
+                };
+                cancelBtn.onclick = () => {
+                    confirmModal.classList.remove('active');
+                };
+            };
+            
+            // Fungsi untuk menampilkan modal pesan
+            const showMessageModal = (message) => {
+                document.getElementById('messageContent').textContent = message;
+                messageModal.classList.add('active');
+            };
+            closeMessageBtn.addEventListener('click', () => {
+                messageModal.classList.remove('active');
+            });
+
+
+            // Fungsi untuk memformat angka menjadi format mata uang Rupiah
+            const formatRupiah = (number) => {
+                return new Intl.NumberFormat('id-ID', {
+                    style: 'currency',
+                    currency: 'IDR',
+                    minimumFractionDigits: 0
+                }).format(number);
+            };
+
+            // ---- INISIALISASI FIREBASE ----
+            const app = initializeApp(firebaseConfig);
+            auth = getAuth(app);
+            db = getFirestore(app);
+
+            // Listener untuk status autentikasi
+            onAuthStateChanged(auth, async (user) => {
+                if (user) {
+                    userId = user.uid;
+                    console.log("User ID:", userId); // Log ID pengguna untuk debugging
+                } else {
+                    // Masuk secara anonim. Ini yang akan digunakan saat Anda menjalankan aplikasi
+                    // di luar Canvas. Anda bisa menggantinya dengan metode autentikasi lain
+                    // (misal: signInWithEmailAndPassword, signInWithPopup, dll) jika diperlukan.
+                    try {
+                        const anonUser = await signInAnonymously(auth);
+                        userId = anonUser.user.uid;
+                        console.log("User signed in anonymously with ID:", userId);
+                    } catch (error) {
+                        console.error("Gagal melakukan sign in anonim:", error);
+                        // Jika gagal, gunakan ID anonim acak sebagai fallback
+                        userId = `anon-${crypto.randomUUID()}`;
+                    }
+                }
+                
+                // Panggil listener Firestore setelah user terautentikasi
+                setupFirestoreListeners();
+            });
+
+            // ---- FUNGSI FIRESTORE ----
+            // =================================================================================================
+            // CATATAN: Jalur koleksi telah diubah.
+            // Di lingkungan Anda, data akan disimpan di jalur 'users/[userId]/[collectionName]'.
+            // Pastikan Anda telah mengatur 'Firestore Security Rules' yang sesuai!
+            // =================================================================================================
+            const getCollectionPath = (collectionName) => {
+                return `users/${userId}/${collectionName}`;
+            };
+            
+            const setupFirestoreListeners = () => {
+                if (!userId) return; // Pastikan user sudah terautentikasi sebelum mendengarkan data
+
+                // Listener untuk data Service
+                onSnapshot(collection(db, getCollectionPath('services')), (snapshot) => {
+                    serviceData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    renderAll();
+                });
+
+                // Listener untuk data Pengeluaran
+                onSnapshot(collection(db, getCollectionPath('expenses')), (snapshot) => {
+                    expenseData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    renderAll();
+                });
+
+                // Listener untuk data Sparepart
+                onSnapshot(collection(db, getCollectionPath('spareparts')), (snapshot) => {
+                    sparePartData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    renderAll();
+                });
+            };
+
+            // ---- RENDER DAN LOGIC APLIKASI ----
+            // Fungsi untuk merender tabel data harian service
+            const renderServiceTable = (filterText = '') => {
+                dailyServiceTable.innerHTML = '';
+                const filteredData = serviceData.filter(entry => 
+                    entry.konsumen.toLowerCase().includes(filterText.toLowerCase()) ||
+                    entry.kerusakan.toLowerCase().includes(filterText.toLowerCase()) ||
+                    entry.tanggal.toLowerCase().includes(filterText.toLowerCase())
+                );
+                
+                filteredData.forEach(entry => {
+                    const laba = entry.biayaService - entry.modal;
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${entry.tanggal}</td>
+                        <td class="whitespace-nowrap">${entry.konsumen}</td>
+                        <td class="whitespace-nowrap">${entry.kerusakan}</td>
+                        <td>${entry.garansi ? entry.garansi : '-'}</td>
+                        <td class="whitespace-nowrap">${formatRupiah(entry.modal)}</td>
+                        <td class="whitespace-nowrap">${formatRupiah(entry.biayaService)}</td>
+                        <td class="whitespace-nowrap">${formatRupiah(laba)}</td>
+                        <td>
+                            <button class="btn btn-primary text-sm py-1 px-3" data-id="${entry.id}" data-action="edit">Edit</button>
+                            <button class="btn btn-danger text-sm py-1 px-3" data-id="${entry.id}" data-action="delete">Hapus</button>
+                        </td>
+                    `;
+                    dailyServiceTable.appendChild(row);
+                });
+
+                // Tambahkan event listener untuk tombol edit dan hapus
+                dailyServiceTable.querySelectorAll('.btn').forEach(button => {
+                    button.addEventListener('click', (e) => {
+                        const id = e.target.dataset.id;
+                        const action = e.target.dataset.action;
+                        if (action === 'edit') {
+                            editService(id);
+                        } else if (action === 'delete') {
+                            showConfirmModal('Apakah Anda yakin ingin menghapus data pemasukan ini?', () => {
+                                deleteDoc(doc(db, getCollectionPath('services'), id));
+                            });
+                        }
+                    });
+                });
+            };
+
+            // Fungsi untuk mengedit data service
+            const editService = async (id) => {
+                const entryToEdit = serviceData.find(entry => entry.id === id);
+                if (!entryToEdit) return;
+                
+                document.getElementById('serviceId').value = id;
+                document.getElementById('tanggalService').value = entryToEdit.tanggal;
+                document.getElementById('konsumen').value = entryToEdit.konsumen;
+                document.getElementById('kerusakan').value = entryToEdit.kerusakan;
+                document.getElementById('garansi').value = entryToEdit.garansi;
+                document.getElementById('biayaService').value = entryToEdit.biayaService;
+                
+                const sparepartDocId = entryToEdit.sparepartId;
+                if (sparepartDocId) {
+                    const part = sparePartData.find(part => part.id === sparepartDocId);
+                    if (part) {
+                        sparepartUsedSearch.value = `${part.jenisSparepart} - ${part.tipe} (Stok: ${part.jumlahStok})`;
+                        sparepartUsedId.value = sparepartDocId;
+                        modalInput.value = part.hargaBeli;
+                        modalDisplay.textContent = formatRupiah(part.hargaJual);
+                        selectedSparePart = part;
+                    }
+                } else {
+                    sparepartUsedSearch.value = '';
+                    sparepartUsedId.value = '';
+                    modalInput.value = 0;
+                    modalDisplay.textContent = formatRupiah(0);
+                    selectedSparePart = null;
+                }
+
+                document.getElementById('saveServiceBtn').textContent = 'Update Pemasukan';
+            };
+
+            // Fungsi untuk merender tabel pengeluaran
+            const renderExpenseTable = (filterText = '') => {
+                expenseDataTable.innerHTML = '';
+                const filteredData = expenseData.filter(entry => 
+                    entry.jenisPengeluaran.toLowerCase().includes(filterText.toLowerCase()) ||
+                    entry.keterangan.toLowerCase().includes(filterText.toLowerCase()) ||
+                    entry.tanggal.toLowerCase().includes(filterText.toLowerCase())
+                );
+
+                filteredData.forEach(entry => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${entry.tanggal}</td>
+                        <td class="whitespace-nowrap">${entry.jenisPengeluaran}</td>
+                        <td class="whitespace-nowrap">${formatRupiah(entry.biayaPengeluaran)}</td>
+                        <td class="whitespace-nowrap">${entry.keterangan || '-'}</td>
+                        <td>
+                            <button class="btn btn-primary text-sm py-1 px-3" data-id="${entry.id}" data-action="edit">Edit</button>
+                            <button class="btn btn-danger text-sm py-1 px-3" data-id="${entry.id}" data-action="delete">Hapus</button>
+                        </td>
+                    `;
+                    expenseDataTable.appendChild(row);
+                });
+
+                // Tambahkan event listener untuk tombol edit dan hapus
+                expenseDataTable.querySelectorAll('.btn').forEach(button => {
+                    button.addEventListener('click', (e) => {
+                        const id = e.target.dataset.id;
+                        const action = e.target.dataset.action;
+                        if (action === 'edit') {
+                            editExpense(id);
+                        } else if (action === 'delete') {
+                            showConfirmModal('Apakah Anda yakin ingin menghapus data pengeluaran ini?', () => {
+                                deleteDoc(doc(db, getCollectionPath('expenses'), id));
+                            });
+                        }
+                    });
+                });
+            };
+
+            // Fungsi untuk mengedit data pengeluaran
+            const editExpense = (id) => {
+                const entryToEdit = expenseData.find(entry => entry.id === id);
+                if (!entryToEdit) return;
+                
+                document.getElementById('expenseId').value = id;
+                document.getElementById('tanggalPengeluaran').value = entryToEdit.tanggal;
+                document.getElementById('jenisPengeluaran').value = entryToEdit.jenisPengeluaran;
+                document.getElementById('biayaPengeluaran').value = entryToEdit.biayaPengeluaran;
+                document.getElementById('keterangan').value = entryToEdit.keterangan;
+
+                document.getElementById('saveExpenseBtn').textContent = 'Update Pengeluaran';
+            };
+            
+            // Fungsi untuk merender tabel sparepart
+            const renderSparePartTable = (filterText = '') => {
+                sparePartTable.innerHTML = '';
+                const filteredData = sparePartData.filter(part => 
+                    part.jenisSparepart.toLowerCase().includes(filterText.toLowerCase()) ||
+                    part.merk.toLowerCase().includes(filterText.toLowerCase()) ||
+                    part.tipe.toLowerCase().includes(filterText.toLowerCase())
+                );
+
+                filteredData.forEach(part => {
+                    const margin = part.hargaJual - part.hargaBeli;
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${part.jenisSparepart}</td>
+                        <td>${part.merk}</td>
+                        <td>${part.tipe}</td>
+                        <td>${formatRupiah(part.hargaBeli)}</td>
+                        <td>${formatRupiah(part.hargaJual)}</td>
+                        <td>${formatRupiah(margin)}</td>
+                        <td>${part.jumlahStok}</td>
+                        <td>
+                            <button class="btn btn-primary text-sm py-1 px-3" data-id="${part.id}" data-action="edit">Edit</button>
+                            <button class="btn btn-danger text-sm py-1 px-3" data-id="${part.id}" data-action="delete">Hapus</button>
+                        </td>
+                    `;
+                    sparePartTable.appendChild(row);
+                });
+
+                // Tambahkan event listener untuk tombol edit dan hapus
+                sparePartTable.querySelectorAll('.btn').forEach(button => {
+                    button.addEventListener('click', (e) => {
+                        const id = e.target.dataset.id;
+                        const action = e.target.dataset.action;
+                        if (action === 'edit') {
+                            editSparePart(id);
+                        } else if (action === 'delete') {
+                            showConfirmModal('Apakah Anda yakin ingin menghapus sparepart ini?', () => {
+                                deleteDoc(doc(db, getCollectionPath('spareparts'), id));
+                            });
+                        }
+                    });
+                });
+            };
+
+            // Fungsi untuk mengedit sparepart
+            const editSparePart = (id) => {
+                const partToEdit = sparePartData.find(part => part.id === id);
+                if (!partToEdit) return;
+                
+                document.getElementById('sparePartId').value = id;
+                document.getElementById('partJenis').value = partToEdit.jenisSparepart;
+                document.getElementById('partMerk').value = partToEdit.merk;
+                document.getElementById('partTipe').value = partToEdit.tipe;
+                document.getElementById('partHargaBeli').value = partToEdit.hargaBeli;
+                document.getElementById('partHargaJual').value = partToEdit.hargaJual;
+                document.getElementById('partJumlahStok').value = partToEdit.jumlahStok;
+                document.getElementById('partMargin').value = formatRupiah(partToEdit.hargaJual - partToEdit.hargaBeli);
+
+                document.getElementById('saveSparePartBtn').textContent = 'Update Sparepart';
+            };
+
+            // Fungsi untuk merender tabel rekap bulanan
+            const renderMonthlyReport = () => {
+                monthlyReportTable.innerHTML = '';
+                
+                // Gabungkan data service dan pengeluaran ke dalam satu objek per bulan
+                const monthlyData = {};
+
+                serviceData.forEach(entry => {
+                    const monthYear = new Date(entry.tanggal).toISOString().slice(0, 7);
+                    if (!monthlyData[monthYear]) {
+                        monthlyData[monthYear] = {
+                            totalPemasukan: 0,
+                            totalModal: 0,
+                            totalPengeluaran: 0,
+                            jumlahTransaksi: 0
+                        };
+                    }
+                    monthlyData[monthYear].totalPemasukan += parseFloat(entry.biayaService);
+                    monthlyData[monthYear].totalModal += parseFloat(entry.modal);
+                    monthlyData[monthYear].jumlahTransaksi += 1;
+                });
+
+                expenseData.forEach(entry => {
+                    const monthYear = new Date(entry.tanggal).toISOString().slice(0, 7);
+                    if (!monthlyData[monthYear]) {
+                        monthlyData[monthYear] = {
+                            totalPemasukan: 0,
+                            totalModal: 0,
+                            totalPengeluaran: 0,
+                            jumlahTransaksi: 0
+                        };
+                    }
+                    monthlyData[monthYear].totalPengeluaran += parseFloat(entry.biayaPengeluaran);
+                });
+
+                const sortedMonths = Object.keys(monthlyData).sort();
+                sortedMonths.forEach(month => {
+                    const report = monthlyData[month];
+                    const labaBersih = (report.totalPemasukan - report.totalModal) - report.totalPengeluaran;
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${new Date(month).toLocaleString('id-ID', { month: 'long', year: 'numeric' })}</td>
+                        <td>${formatRupiah(report.totalPemasukan)}</td>
+                        <td>${formatRupiah(report.totalModal)}</td>
+                        <td>${formatRupiah(report.totalPengeluaran)}</td>
+                        <td class="font-bold ${labaBersih >= 0 ? 'text-green-600' : 'text-red-600'}">${formatRupiah(labaBersih)}</td>
+                        <td>${report.jumlahTransaksi}</td>
+                    `;
+                    monthlyReportTable.appendChild(row);
+                });
+            };
+
+            // Fungsi untuk mengupdate grafik
+            const updateCharts = () => {
+                
+                // Data untuk grafik harian
+                const dailySales = {};
+                const today = new Date();
+                for (let i = 6; i >= 0; i--) {
+                    const d = new Date(today);
+                    d.setDate(today.getDate() - i);
+                    const dateStr = d.toISOString().slice(0, 10);
+                    dailySales[dateStr] = 0;
+                }
+                
+                serviceData.forEach(entry => {
+                    if (dailySales.hasOwnProperty(entry.tanggal)) {
+                        dailySales[entry.tanggal] += parseFloat(entry.biayaService);
+                    }
+                });
+
+                const dailyLabels = Object.keys(dailySales).map(d => new Date(d).toLocaleString('id-ID', { day: 'numeric', month: 'short' }));
+                const dailyData = Object.values(dailySales);
+
+                // Data untuk grafik bulanan
+                const monthlySales = {};
+                const currentMonth = new Date().getMonth();
+                const currentYear = new Date().getFullYear();
+                for (let i = 11; i >= 0; i--) {
+                    const d = new Date(currentYear, currentMonth - i, 1);
+                    const monthYear = d.toISOString().slice(0, 7);
+                    monthlySales[monthYear] = 0;
+                }
+                
+                serviceData.forEach(entry => {
+                    const monthYear = new Date(entry.tanggal).toISOString().slice(0, 7);
+                    if (monthlySales.hasOwnProperty(monthYear)) {
+                        monthlySales[monthYear] += parseFloat(entry.biayaService);
+                    }
+                });
+
+                const monthlyLabels = Object.keys(monthlySales).map(m => new Date(m).toLocaleString('id-ID', { month: 'short', year: 'numeric' }));
+                const monthlyData = Object.values(monthlySales);
+
+                // Hancurkan chart yang ada jika sudah dibuat
+                if (dailyChart) dailyChart.destroy();
+                if (monthlyChart) monthlyChart.destroy();
+
+                // Buat chart harian
+                dailyChart = new Chart(dailySalesChartCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: dailyLabels,
+                        datasets: [{
+                            label: 'Total Penjualan (Rp)',
+                            data: dailyData,
+                            backgroundColor: 'rgba(59, 130, 246, 0.5)',
+                            borderColor: 'rgba(59, 130, 246, 1)',
+                            borderWidth: 1,
+                            borderRadius: 8,
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                ticks: {
+                                    callback: function(value) {
+                                        return formatRupiah(value);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+
+                // Buat chart bulanan
+                monthlyChart = new Chart(monthlySalesChartCtx, {
+                    type: 'line',
+                    data: {
+                        labels: monthlyLabels,
+                        datasets: [{
+                            label: 'Total Penjualan (Rp)',
+                            data: monthlyData,
+                            backgroundColor: 'rgba(16, 185, 129, 0.5)',
+                            borderColor: 'rgba(16, 185, 129, 1)',
+                            borderWidth: 2,
+                            fill: true,
+                            tension: 0.4,
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                ticks: {
+                                    callback: function(value) {
+                                        return formatRupiah(value);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            };
+
+            // Fungsi utama untuk merender semua komponen
+            const renderAll = () => {
+                renderServiceTable(serviceSearch.value);
+                renderExpenseTable(expenseSearch.value);
+                renderSparePartTable(sparePartSearch.value);
+                renderMonthlyReport();
+                updateCharts();
+            };
+
+            // Event listener untuk searchable dropdown sparepart
+            sparepartUsedSearch.addEventListener('focus', () => {
+                renderSparepartDropdown('');
+                sparepartDropdownList.classList.remove('hidden');
+            });
+            sparepartUsedSearch.addEventListener('input', (e) => {
+                const searchTerm = e.target.value;
+                renderSparepartDropdown(searchTerm);
+            });
+            document.addEventListener('click', (e) => {
+                if (!sparepartUsedSearch.parentNode.contains(e.target)) {
+                    sparepartDropdownList.classList.add('hidden');
+                }
+            });
+
+            const renderSparepartDropdown = (filterText) => {
+                sparepartDropdownList.innerHTML = '';
+                const filteredParts = sparePartData.filter(part => 
+                    part.jumlahStok > 0 && 
+                    (part.jenisSparepart.toLowerCase().includes(filterText.toLowerCase()) || 
+                     part.merk.toLowerCase().includes(filterText.toLowerCase()) || 
+                     part.tipe.toLowerCase().includes(filterText.toLowerCase()))
+                );
+
+                if (filteredParts.length === 0 && filterText !== '') {
+                    const noResultItem = document.createElement('div');
+                    noResultItem.className = 'dropdown-list-item text-gray-500 italic';
+                    noResultItem.textContent = 'Tidak ada sparepart yang cocok.';
+                    sparepartDropdownList.appendChild(noResultItem);
+                } else {
+                    filteredParts.forEach(part => {
+                        const item = document.createElement('div');
+                        item.className = 'dropdown-list-item';
+                        item.textContent = `${part.jenisSparepart} - ${part.tipe} (Stok: ${part.jumlahStok})`;
+                        item.dataset.id = part.id;
+                        item.addEventListener('click', () => {
+                            sparepartUsedSearch.value = item.textContent;
+                            sparepartUsedId.value = part.id;
+                            modalInput.value = part.hargaBeli; // Simpan harga beli ke input hidden
+                            modalDisplay.textContent = formatRupiah(part.hargaJual);
+                            selectedSparePart = part;
+                            sparepartDropdownList.classList.add('hidden');
+                        });
+                        sparepartDropdownList.appendChild(item);
+                    });
+                }
+            };
+            
+            // Handle submit form pemasukan
+            serviceForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                
+                const serviceDocId = document.getElementById('serviceId').value;
+                const sparepartDocId = sparepartUsedId.value;
+
+                let oldSparePartId = null;
+
+                if (serviceDocId) {
+                    const oldServiceEntry = serviceData.find(entry => entry.id === serviceDocId);
+                    if (oldServiceEntry) {
+                        oldSparePartId = oldServiceEntry.sparepartId;
+                    }
+                }
+                
+                // Jika ada sparepart yang dipilih, lakukan pengurangan stok
+                if (sparepartDocId) {
+                    const part = sparePartData.find(p => p.id === sparepartDocId);
+                    if (part && part.jumlahStok > 0 && sparepartDocId !== oldSparePartId) {
+                        const newStock = part.jumlahStok - 1;
+                        await updateDoc(doc(db, getCollectionPath('spareparts'), sparepartDocId), { jumlahStok: newStock });
+                    } else if (!part || part.jumlahStok === 0) {
+                        showMessageModal('Stok sparepart yang dipilih sudah habis!');
+                        return;
+                    }
+                }
+
+                // Jika sparepart diubah saat edit, kembalikan stok sparepart lama
+                if (serviceDocId && oldSparePartId && oldSparePartId !== sparepartDocId) {
+                    const oldPart = sparePartData.find(p => p.id === oldSparePartId);
+                    if (oldPart) {
+                        const newStock = oldPart.jumlahStok + 1;
+                        await updateDoc(doc(db, getCollectionPath('spareparts'), oldSparePartId), { jumlahStok: newStock });
+                    }
+                }
+
+                const serviceDataToSave = {
+                    tanggal: document.getElementById('tanggalService').value,
+                    konsumen: document.getElementById('konsumen').value,
+                    kerusakan: document.getElementById('kerusakan').value,
+                    garansi: document.getElementById('garansi').value,
+                    modal: parseFloat(modalInput.value),
+                    biayaService: parseFloat(document.getElementById('biayaService').value),
+                    sparepartId: sparepartDocId || null
+                };
+                
+                try {
+                    if (serviceDocId) {
+                        // Update data
+                        await updateDoc(doc(db, getCollectionPath('services'), serviceDocId), serviceDataToSave);
+                    } else {
+                        // Tambah data baru
+                        await addDoc(collection(db, getCollectionPath('services')), serviceDataToSave);
+                    }
+                    serviceForm.reset();
+                    document.getElementById('serviceId').value = '';
+                    document.getElementById('saveServiceBtn').textContent = 'Simpan Pemasukan';
+                    sparepartUsedSearch.value = '';
+                    sparepartUsedId.value = '';
+                    modalInput.value = 0;
+                    modalDisplay.textContent = formatRupiah(0);
+                    selectedSparePart = null;
+                } catch (e) {
+                    console.error("Error adding/updating document: ", e);
+                    showMessageModal("Gagal menyimpan data pemasukan.");
+                }
+            });
+
+            // Fungsi untuk mencetak struk
+            const printReceipt = () => {
+                const tanggal = document.getElementById('tanggalService').value;
+                const konsumen = document.getElementById('konsumen').value;
+                const kerusakan = document.getElementById('kerusakan').value;
+                const biayaService = parseFloat(document.getElementById('biayaService').value);
+
+                if (!konsumen || !kerusakan || isNaN(biayaService) || biayaService <= 0) {
+                    showMessageModal('Mohon isi nama konsumen, jenis kerusakan, dan biaya service terlebih dahulu.');
+                    return;
+                }
+
+                const printWindow = window.open('', 'PRINT', 'height=600,width=400');
+                printWindow.document.write('<html><head><title>Struk Pembayaran</title>');
+                printWindow.document.write('<style>');
+                printWindow.document.write(`
+                    @page { size: 58mm auto; margin: 0; }
+                    body {
+                        font-family: monospace, sans-serif;
+                        font-size: 10px;
+                        width: 58mm;
+                        margin: 0;
+                        padding: 5mm;
+                        box-sizing: border-box;
+                        color: black;
+                    }
+                    .receipt-container {
+                        width: 100%;
+                    }
+                    .receipt-header {
+                        text-align: center;
+                        font-size: 14px;
+                        font-weight: bold;
+                        margin-bottom: 2px;
+                    }
+                    .receipt-sub-header {
+                        text-align: center;
+                        font-size: 10px;
+                        margin-bottom: 2px;
+                    }
+                    .receipt-address, .receipt-contact {
+                        text-align: center;
+                        font-size: 9px;
+                        margin-bottom: 5px;
+                    }
+                    .receipt-line {
+                        border-top: 1px dashed black;
+                        margin: 5px 0;
+                    }
+                    .receipt-item-row {
+                        display: flex;
+                        justify-content: space-between;
+                        margin-bottom: 2px;
+                    }
+                    .receipt-item-details {
+                        width: 70%;
+                    }
+                    .receipt-item-price {
+                        text-align: right;
+                        width: 30%;
+                    }
+                    .receipt-total-container {
+                        display: flex;
+                        justify-content: space-between;
+                        font-weight: bold;
+                        margin-top: 5px;
+                    }
+                    .receipt-footer {
+                        text-align: center;
+                        margin-top: 10px;
+                        font-size: 10px;
+                    }
+                `);
+                printWindow.document.write('</style>');
+                printWindow.document.write('</head><body>');
+                printWindow.document.write('<div class="receipt-container">');
+                
+                // Header Struk
+                printWindow.document.write('<div class="receipt-header">CAHAYA REZEKI RIZKI</div>');
+                printWindow.document.write('<div class="receipt-sub-header">hardware software solution</div>');
+                printWindow.document.write('<div class="receipt-address">jl bojongmalaka 002/004 baleendah</div>');
+                printWindow.document.write('<div class="receipt-contact">WA: 083820808255</div>');
+                printWindow.document.write('<div class="receipt-line"></div>');
+
+                // Rincian Pembayaran
+                let totalPembayaran = 0;
+                
+                // Tanggal
+                printWindow.document.write(`
+                    <div class="receipt-item-row">
+                        <span>Tanggal:</span>
+                        <span>${tanggal}</span>
+                    </div>
+                `);
+
+                // Nama Konsumen
+                printWindow.document.write(`
+                    <div class="receipt-item-row">
+                        <span>Konsumen:</span>
+                        <span>${konsumen}</span>
+                    </div>
+                `);
+
+                // Jenis Kerusakan
+                printWindow.document.write(`
+                    <div class="receipt-item-row">
+                        <span>Jenis Kerusakan:</span>
+                        <span>${kerusakan}</span>
+                    </div>
+                    <div class="receipt-line"></div>
+                `);
+                
+                // Biaya Sparepart (jika ada)
+                if (selectedSparePart) {
+                    const hargaJual = selectedSparePart.hargaJual;
+                    printWindow.document.write(`
+                        <div class="receipt-item-row">
+                            <span>Sparepart:</span>
+                            <span>${selectedSparePart.tipe}</span>
+                        </div>
+                        <div class="receipt-item-row">
+                            <span>(Harga Jual)</span>
+                            <span class="receipt-item-price">${formatRupiah(hargaJual)}</span>
+                        </div>
+                    `);
+                    totalPembayaran += hargaJual;
+                }
+
+                // Biaya Service
+                printWindow.document.write(`
+                    <div class="receipt-item-row">
+                        <span>Biaya Jasa Service:</span>
+                        <span class="receipt-item-price">${formatRupiah(biayaService)}</span>
+                    </div>
+                `);
+                totalPembayaran += biayaService;
+
+                printWindow.document.write('<div class="receipt-line"></div>');
+                
+                // Total Pembayaran
+                printWindow.document.write(`
+                    <div class="receipt-total-container">
+                        <span>TOTAL</span>
+                        <span>${formatRupiah(totalPembayaran)}</span>
+                    </div>
+                `);
+
+                // Footer Struk
+                printWindow.document.write('<div class="receipt-line"></div>');
+                printWindow.document.write('<div class="receipt-footer">Terima kasih atas kunjungan Anda!</div>');
+                
+                printWindow.document.write('</div>');
+                printWindow.document.write('</body></html>');
+                
+                printWindow.document.close();
+                printWindow.focus();
+                printWindow.print();
+                
+                setTimeout(() => {
+                    printWindow.close();
+                }, 500);
+            };
+
+            printReceiptBtn.addEventListener('click', printReceipt);
+
+            // Handle submit form pengeluaran
+            expenseForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const expenseDocId = document.getElementById('expenseId').value;
+                const expenseDataToSave = {
+                    tanggal: document.getElementById('tanggalPengeluaran').value,
+                    jenisPengeluaran: document.getElementById('jenisPengeluaran').value,
+                    biayaPengeluaran: parseFloat(document.getElementById('biayaPengeluaran').value),
+                    keterangan: document.getElementById('keterangan').value,
+                };
+                
+                try {
+                    if (expenseDocId) {
+                        await updateDoc(doc(db, getCollectionPath('expenses'), expenseDocId), expenseDataToSave);
+                    } else {
+                        await addDoc(collection(db, getCollectionPath('expenses')), expenseDataToSave);
+                    }
+                    expenseForm.reset();
+                    document.getElementById('expenseId').value = '';
+                    document.getElementById('saveExpenseBtn').textContent = 'Simpan Pengeluaran';
+                } catch (e) {
+                    console.error("Error adding/updating document: ", e);
+                    showMessageModal("Gagal menyimpan data pengeluaran.");
+                }
+            });
+
+            // Handle submit form sparepart
+            sparePartForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const sparePartDocId = document.getElementById('sparePartId').value;
+                const sparePartDataToSave = {
+                    jenisSparepart: document.getElementById('partJenis').value,
+                    merk: document.getElementById('partMerk').value,
+                    tipe: document.getElementById('partTipe').value,
+                    hargaBeli: parseFloat(document.getElementById('partHargaBeli').value),
+                    hargaJual: parseFloat(document.getElementById('partHargaJual').value),
+                    jumlahStok: parseInt(document.getElementById('partJumlahStok').value),
+                };
+                
+                try {
+                    if (sparePartDocId) {
+                        await updateDoc(doc(db, getCollectionPath('spareparts'), sparePartDocId), sparePartDataToSave);
+                    } else {
+                        await addDoc(collection(db, getCollectionPath('spareparts')), sparePartDataToSave);
+                    }
+                    sparePartForm.reset();
+                    document.getElementById('sparePartId').value = '';
+                    document.getElementById('saveSparePartBtn').textContent = 'Tambah Sparepart';
+                } catch (e) {
+                    console.error("Error adding/updating document: ", e);
+                    showMessageModal("Gagal menyimpan data sparepart.");
+                }
+            });
+
+            // Hitung margin secara otomatis
+            document.getElementById('partHargaBeli').addEventListener('input', updateSparePartMargin);
+            document.getElementById('partHargaJual').addEventListener('input', updateSparePartMargin);
+
+            function updateSparePartMargin() {
+                const hargaBeli = parseFloat(document.getElementById('partHargaBeli').value) || 0;
+                const hargaJual = parseFloat(document.getElementById('partHargaJual').value) || 0;
+                const margin = hargaJual - hargaBeli;
+                document.getElementById('partMargin').value = formatRupiah(margin);
+            }
+
+            // Fungsi pencarian untuk service
+            serviceSearch.addEventListener('input', (e) => {
+                renderServiceTable(e.target.value);
+            });
+
+            // Fungsi pencarian untuk expense
+            expenseSearch.addEventListener('input', (e) => {
+                renderExpenseTable(e.target.value);
+            });
+
+            // Fungsi pencarian untuk sparepart
+            sparePartSearch.addEventListener('input', (e) => {
+                renderSparePartTable(e.target.value);
+            });
+        });
+    </script>
+</body>
+</html>
